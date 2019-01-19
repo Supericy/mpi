@@ -4,16 +4,14 @@ import bootstrap
 import auction
 
 @click.group()
-@click.pass_context
-def main(ctx):
+def main():
     pass
 
 @main.command()
 @click.option('--email', default=None)
 @click.option('--minimum-year', default=None)
 @click.option('--model', default=None)
-@click.pass_context
-def subscribe(ctx, email, minimum_year, model):
+def subscribe(email, minimum_year, model):
     if not email:
         raise Exception("Subscription requires --email=<addr>")
 
@@ -34,8 +32,7 @@ def subscribe(ctx, email, minimum_year, model):
     ))
 
 @main.command()
-@click.pass_context
-def subscriptions(ctx):
+def subscriptions():
     subscriptions = bootstrap.auctions.subscriptions()
 
     table = PrettyTable(['Subscription ID', 'Email', 'Search'])

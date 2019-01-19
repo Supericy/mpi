@@ -23,6 +23,10 @@ class Filesystem:
         with open(filename, 'w') as f:
             f.write(content)
 
+    @staticmethod
+    def unlink(filename):
+        os.unlink(filename)
+
 class Vehicle:
     def __init__(self, vehicleId, year, model, url):
         self.vehicleId = vehicleId
@@ -121,6 +125,11 @@ class SubscriptionRepository:
 
     def all(self):
         return list(map(self.find, self.__subscriptionIds()))
+
+    def delete(self, subscription):
+        Filesystem.unlink(
+            self.__storageFile(subscription.subscriptionId)
+        )
 
     def save(self, subscription):
         if not subscription.subscriptionId:
