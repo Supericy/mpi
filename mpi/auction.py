@@ -13,12 +13,12 @@ class Filesystem:
         return glob.glob(filename)
 
     @staticmethod
-    def read(filename):
+    def get(filename):
         with open(filename, 'r') as f:
             return ''.join(f.readlines())
 
     @staticmethod
-    def write(filename, content):
+    def put(filename, content):
         os.makedirs(os.path.dirname(filename), exist_ok=True)
         with open(filename, 'w') as f:
             f.write(content)
@@ -86,6 +86,24 @@ class NotificationService:
             self.emailSender.send(notification)
 
 
+class SubscriptionNormalizer:
+    @staticmethod
+    def normalize(subscription):
+        return {
+            "subscriptionId": subscription.subscriptionId,
+            "email": subscription.email,
+            "search": subscription.search
+        }
+
+    @staticmethod
+    def denormalize(normalized):
+        return Subscription(
+            normalized['email'],
+            normalized['search'],
+            subscriptionId=normalized['subscriptionId']
+        )
+
+
 class SubscriptionRepository:
     def __init__(self, storageDir):
         self.storageDir = storageDir
@@ -98,7 +116,7 @@ class SubscriptionRepository:
         return False
 
     def find(self, subscriptionId):
-        serialized = Filesystem.read(self.__storageFile(subscriptionId))
+        serialized = Filesystem.get(self.__storageFile(subscriptionId))
         return self.__deserialize(serialized)
 
     def all(self):
@@ -108,10 +126,12 @@ class SubscriptionRepository:
         if not subscription.subscriptionId:
             subscription.subscriptionId = str(uuid.uuid4())
 
-        Filesystem.write(
+        Filesystem.put(
             self.__storageFile(subscription.subscriptionId),
             self.__serialize(subscription)
         )
+
+        return subscription
 
     def __subscriptionIds(self):
         subscriptionFilenames = Filesystem.glob(
@@ -121,19 +141,11 @@ class SubscriptionRepository:
         return list(map(os.path.basename, subscriptionFilenames))
 
     def __serialize(self, subscription):
-        return yaml.dump({
-            "subscriptionId": subscription.subscriptionId,
-            "email": subscription.email,
-            "search": subscription.search
-        })
+        return yaml.dump(SubscriptionNormalizer.normalize(subscription))
 
     def __deserialize(self, serialized):
         normalized = yaml.load(serialized)
-        return Subscription(
-            normalized['email'],
-            normalized['search'],
-            subscriptionId=normalized['subscriptionId']
-        )
+        return SubscriptionNormalizer.denormalize(normalized)
 
     def __storageFile(self, subscriptionId):
         return f'{self.storageDir}/{subscriptionId}'
@@ -202,7 +214,7 @@ class AuctionService:
         if self.subscriptionRepository.exists(subscription.email, subscription.search):
             raise Exception("Subscription already exists.")
 
-        self.subscriptionRepository.save(subscription)
+        return self.subscriptionRepository.save(subscription)
 
     def processNew(self):
         subscriptions = self.subscriptionRepository.all()
