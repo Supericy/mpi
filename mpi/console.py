@@ -46,6 +46,12 @@ def subscriptions():
 
     print(table)
 
+
+@main.command()
+def process():
+    bootstrap.auctions.processNew()
+
+
 if __name__ == "__main__":
     main()
 

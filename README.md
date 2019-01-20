@@ -17,6 +17,11 @@ pipenv run python3 mpi/console.py subscriptions
 +--------------------------------------+---------------+-----------------------------------------------+
 ```
 
+##### Process New Auctions:
+```
+pipenv run python3 mpi/console.py process
+```
+
 ##### Start Development Webserver:
 ```
 env FLASK_APP=mpi/web.py FLASK_DEBUG=1 pipenv run flask run

@@ -1,0 +1,23 @@
+config = {
+    'auction': {
+        'processed': {
+            'storage': {
+                'directory': '/var/lib/mpi/auctions'
+            }
+        }
+    },
+    'subscription': {
+        'storage': {
+            'directory': '/var/lib/mpi/subscriptions'
+        }
+    },
+    'notification': {
+        'email': {
+            'account': {
+                'username': '<replace-me@example.com>',
+                'password': '<replace-me>'
+            },
+            'smtp': 'smtp.gmail.com:587'
+        }
+    }
+}

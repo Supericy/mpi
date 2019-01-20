@@ -1,24 +1,24 @@
+from config import config
 from auction import (
     AuctionService,
     ProcessedAuctions,
     AuctionRepository,
     SubscriptionRepository,
     NotificationService,
-    EmailSender,
-    Subscription
+    EmailSender
 )
 
-config = {
-    'subscription': {
-        'storage': {
-            'directory': '/var/lib/ckosie/mpi/subscriptions'
-        }
-    }
-}
-
 auctions = AuctionService(
-    ProcessedAuctions(),
+    ProcessedAuctions(
+        config['auction']['processed']['storage']['directory']
+    ),
     AuctionRepository(),
-    SubscriptionRepository(config['subscription']['storage']['directory']),
-    NotificationService(EmailSender())
+    SubscriptionRepository(
+        config['subscription']['storage']['directory']
+    ),
+    NotificationService(EmailSender(
+        config['notification']['email']['account']['username'],
+        config['notification']['email']['account']['password'],
+        config['notification']['email']['smtp']
+    ))
 )

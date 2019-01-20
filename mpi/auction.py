@@ -4,10 +4,15 @@ import uuid
 import os
 import yaml
 import glob
+import smtplib
 from bs4 import BeautifulSoup
 
 
 class Filesystem:
+    @staticmethod
+    def exists(filename):
+        return os.path.isfile(filename)
+
     @staticmethod
     def glob(filename):
         return glob.glob(filename)
@@ -19,13 +24,23 @@ class Filesystem:
 
     @staticmethod
     def put(filename, content):
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        Filesystem.__mkdirs(filename)
         with open(filename, 'w') as f:
             f.write(content)
 
     @staticmethod
     def unlink(filename):
         os.unlink(filename)
+
+    @staticmethod
+    def touch(filename):
+        Filesystem.__mkdirs(filename)
+        with open(filename, 'w'):
+            pass
+
+    @staticmethod
+    def __mkdirs(filename):
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
 
 class Vehicle:
     def __init__(self, vehicleId, year, model, url):
@@ -61,7 +76,7 @@ class Auction:
 
 class Email:
     def __init__(self, to, subject, body):
-        self.to = to
+        self.recipients = to
         self.subject = subject
         self.body = body
 
@@ -69,16 +84,41 @@ class Email:
 class VehicleFound(Email):
     def __init__(self, subscription, vehicle):
         super().__init__(
-            subscription.email,
+            [subscription.email],
             f'We found a vehicle that matched your search criteria!',
             f'We found a {vehicle.year} {vehicle.model} that you may be interested in. Check it out at {vehicle.url}.'
         )
 
 
 class EmailSender:
+    def __init__(self, username, password, smtpserver):
+        self.username = username
+        self.password = password
+        self.smtpserver = smtpserver
+
     def send(self, email):
-        print(email)
-        # Not implemented
+        sender = self.username
+        receivers = email.recipients
+        message = f"""\
+From: {sender}
+To: {','.join(receivers)}
+Subject: {email.subject}
+
+{email.body}
+"""
+        try:
+            server = smtplib.SMTP(self.smtpserver)
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(self.username, self.password)
+            problems = server.sendmail(sender, receivers, message)
+            if problems:
+                raise Exception(str(problems))
+            server.quit()
+        except Exception as err:
+            print(f'Problem sending email notification: {err}')
+
 
 
 class NotificationService:
@@ -142,6 +182,9 @@ class SubscriptionRepository:
 
         return subscription
 
+    def count(self):
+        return len(self.__subscriptionIds())
+
     def __subscriptionIds(self):
         subscriptionFilenames = Filesystem.glob(
             self.__storageFile('*')
@@ -202,14 +245,26 @@ class AuctionRepository:
 
 
 class ProcessedAuctions:
+    def __init__(self, storageDir):
+        self.storageDir = storageDir
+
     def contains(self, auctionId):
-        return False
+        return self.__isint(auctionId) and Filesystem.exists(self.__storageFile(auctionId))
 
     def add(self, auctionId):
-        pass
+        if self.__isint(auctionId):
+            Filesystem.touch(self.__storageFile(auctionId))
+
+    def __storageFile(self, auctionId):
+        return f'{self.storageDir}/{auctionId}'
+
+    def __isint(self, auctionId):
+        return isinstance(auctionId, int)
 
 
 class AuctionService:
+    MAXIMUM_SUBSCRIPTIONS = 500
+
     def __init__(self, processedAuctions, auctionRepository, subscriptionRepository, notificationService):
         self.processedAuctions = processedAuctions
         self.auctionRepository = auctionRepository
@@ -220,6 +275,9 @@ class AuctionService:
         return self.subscriptionRepository.all()
 
     def subscribe(self, subscription):
+        if self.subscriptionRepository.count() >= self.MAXIMUM_SUBSCRIPTIONS:
+            raise Exception("Subscription cap reached.")
+
         if self.subscriptionRepository.exists(subscription.email, subscription.search):
             raise Exception("Subscription already exists.")
 
