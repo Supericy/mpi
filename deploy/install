@@ -3,7 +3,8 @@
 set -xe
 
 LIB="/usr/lib/mpi"
-NGINX="etc/nginx/sites-available"
+NGINX="etc/nginx"
+NGINX_AVAILABLE="$NGINX/sites-available"
 SYSTEMD="etc/systemd/system"
 
 ssh root@ckserv.net "true \
@@ -11,9 +12,11 @@ ssh root@ckserv.net "true \
     && cp $LIB/dist/$SYSTEMD/mpi-gunicorn.service /$SYSTEMD/ckserv-mpi-gunicorn.service \
     && cp $LIB/dist/$SYSTEMD/mpi-process.service /$SYSTEMD/ckserv-mpi-process.service \
     && cp $LIB/dist/$SYSTEMD/mpi-process.timer /$SYSTEMD/ckserv-mpi-process.timer \
+    && cp $LIB/dist/$NGINX_AVAILABLE/mpi-gunicorn /$NGINX_AVAILABLE/mpi.ckserv.net \
     && systemctl daemon-reload \
     && systemctl enable ckserv-mpi-gunicorn.service \
     && systemctl restart ckserv-mpi-gunicorn.service \
     && systemctl enable ckserv-mpi-process.service \
     && systemctl enable ckserv-mpi-process.timer \
-    && systemctl start ckserv-mpi-process.timer"
+    && systemctl start ckserv-mpi-process.timer \
+    && systemctl restart nginx"

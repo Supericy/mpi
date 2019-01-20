@@ -200,6 +200,9 @@ class SubscriptionRepository:
         return SubscriptionNormalizer.denormalize(normalized)
 
     def __storageFile(self, subscriptionId):
+        if not re.match(r'(\*|[\da-z]+-[\da-z]+-[\da-z]+-[\da-z]+)', subscriptionId):
+            raise Exception(f'Invalid subscription id: {subscriptionId}')
+
         return f'{self.storageDir}/{subscriptionId}'
 
 
@@ -262,8 +265,16 @@ class ProcessedAuctions:
         return isinstance(auctionId, int)
 
 
+class SubscriptionMaximumReached(Exception):
+    pass
+
+
+class SubscriptionExists(Exception):
+    pass
+
+
 class AuctionService:
-    MAXIMUM_SUBSCRIPTIONS = 500
+    MAXIMUM_SUBSCRIPTIONS = 50
 
     def __init__(self, processedAuctions, auctionRepository, subscriptionRepository, notificationService):
         self.processedAuctions = processedAuctions
@@ -276,10 +287,10 @@ class AuctionService:
 
     def subscribe(self, subscription):
         if self.subscriptionRepository.count() >= self.MAXIMUM_SUBSCRIPTIONS:
-            raise Exception("Subscription cap reached.")
+            raise SubscriptionMaximumReached(f"Subscription maximum reached ({self.MAXIMUM_SUBSCRIPTIONS})")
 
         if self.subscriptionRepository.exists(subscription.email, subscription.search):
-            raise Exception("Subscription already exists.")
+            raise SubscriptionExists("Subscription already exists.")
 
         return self.subscriptionRepository.save(subscription)
 

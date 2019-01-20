@@ -4,6 +4,6 @@ deploy:
 	@echo "\nRemember to update the config.py file if needed!"
 
 server:
-	env FLASK_APP=mpi/web.py FLASK_DEBUG=1 pipenv run flask run
+	env FLASK_DEBUG=1 pipenv run python3 mpi/web.py
 
 .PHONY: deploy server

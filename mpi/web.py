@@ -1,7 +1,13 @@
 import bootstrap
 import os
-from auction import Filesystem, Subscription, SubscriptionNormalizer
 from flask import Flask, request, jsonify
+from auction import (
+    Filesystem,
+    Subscription,
+    SubscriptionNormalizer,
+    SubscriptionExists,
+    SubscriptionMaximumReached
+)
 
 app = Flask(__name__)
 
@@ -19,27 +25,35 @@ def index():
 @app.route('/api/v1/subscriptions', methods=['GET', 'POST'])
 def api_v1_subscriptions():
     if request.method == 'POST':
-        search = {}
+        try:
+            search = {}
 
-        if 'searchMinimumYear' in request.json and request.json['searchMinimumYear']:
-            if len(request.json['searchMinimumYear']) > 100:
-                raise Exception("Search minimum year must be less than 100 characters.")
+            if 'searchMinimumYear' in request.json and request.json['searchMinimumYear']:
+                if len(request.json['searchMinimumYear']) > 100:
+                    raise Exception("Search minimum year must be less than 100 characters.")
 
-            search['year'] = {'minimum': request.json['searchMinimumYear']}
+                search['year'] = {'minimum': request.json['searchMinimumYear']}
 
-        if 'searchModel' in request.json and request.json['searchModel']:
-            if len(request.json['searchModel']) > 100:
-                raise Exception("Search model must be less than 100 characters.")
+            if 'searchModel' in request.json and request.json['searchModel']:
+                if len(request.json['searchModel']) > 100:
+                    raise Exception("Search model must be less than 100 characters.")
 
-            search['model'] = request.json['searchModel']
+                search['model'] = request.json['searchModel']
 
-        subscription = bootstrap.auctions.subscribe(Subscription(
-            request.json['email'],
-            search
-        ))
-        return jsonify({
-            'subscription': SubscriptionNormalizer.normalize(subscription)
-        })
+            subscription = bootstrap.auctions.subscribe(Subscription(
+                request.json['email'],
+                search
+            ))
+            return jsonify({
+                'subscription': SubscriptionNormalizer.normalize(subscription)
+            })
+        except Exception as exception:
+            return jsonify({
+                'error': {
+                    'type': exception.__class__.__name__,
+                    'message': str(exception)
+                }
+            })
     else:
         normalized = []
 
