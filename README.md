@@ -1,7 +1,7 @@
 # Usage
 ##### Subscribe:
 ```
-pipenv run python3 mpi/console.py subscribe \
+bin/console subscribe \
     --email=c.c@gmail.com \
     --minimum-year=2005 \
     --model=CAR
@@ -9,7 +9,7 @@ pipenv run python3 mpi/console.py subscribe \
 
 ##### Get Subscriptions:
 ```
-pipenv run python3 mpi/console.py subscriptions
+bin/console subscriptions
 +--------------------------------------+---------------+-----------------------------------------------+
 |           Subscription ID            |     Email     |                     Search                    |
 +--------------------------------------+---------------+-----------------------------------------------+
@@ -19,10 +19,15 @@ pipenv run python3 mpi/console.py subscriptions
 
 ##### Process New Auctions:
 ```
-pipenv run python3 mpi/console.py process
+bin/console process
 ```
 
-##### Start Development Webserver:
+##### Start Local Development Server:
 ```
-env FLASK_APP=mpi/web.py FLASK_DEBUG=1 pipenv run flask run
+make server
+```
+
+##### Deploy
+```
+make deploy
 ```
