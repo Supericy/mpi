@@ -1,0 +1,10 @@
+[Unit]
+Description=Start MPI Auction Web
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/mpi/bin/gunicorn
+
+[Install]
+WantedBy=multi-user.target

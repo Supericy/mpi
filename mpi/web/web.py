@@ -44,3 +44,7 @@ def api_v1_subscriptions():
             'subscriptions': normalized
         })
 
+
+if __name__ == "__main__":
+    app.run()
+

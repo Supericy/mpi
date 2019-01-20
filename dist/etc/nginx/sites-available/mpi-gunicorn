@@ -1,0 +1,9 @@
+server {
+    listen 80;
+    server_name mpi.ckserv.net;
+
+    location / {
+        proxy_pass http://127.0.0.1:32410;
+        proxy_redirect default;
+    }
+}

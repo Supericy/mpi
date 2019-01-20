@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -xe
+
+CURRENT="$(dirname "$0")"
+ROOT_DIR="$CURRENT/.."
+
+rsync -r -a --progress root@ckserv.net:/usr/lib/mpi "$ROOT_DIR/*"
