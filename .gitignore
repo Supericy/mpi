@@ -1,3 +1,4 @@
 .idea/
 
+mpi/__pycache__
 mpi/config.py
