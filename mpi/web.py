@@ -22,9 +22,15 @@ def api_v1_subscriptions():
         search = {}
 
         if 'searchMinimumYear' in request.json and request.json['searchMinimumYear']:
+            if len(request.json['searchMinimumYear']) > 100:
+                raise Exception("Search minimum year must be less than 100 characters.")
+
             search['year'] = {'minimum': request.json['searchMinimumYear']}
 
         if 'searchModel' in request.json and request.json['searchModel']:
+            if len(request.json['searchModel']) > 100:
+                raise Exception("Search model must be less than 100 characters.")
+
             search['model'] = request.json['searchModel']
 
         subscription = bootstrap.auctions.subscribe(Subscription(

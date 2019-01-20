@@ -5,10 +5,10 @@ set -xe
 CURRENT="$(dirname "$0")"
 APP_DIR="$CURRENT/../mpi"
 
-pipenv run gunicorn mpi.web.web:app \
+pipenv install
+pipenv run gunicorn mpi.web:app \
     --chdir "$APP_DIR" \
     --workers 2 \
     --bind 127.0.0.1:32410 \
     --access-logfile /var/log/mpi/access.log \
-    --error-logfile /var/log/mpi/error.log \
-    --daemon
+    --error-logfile /var/log/mpi/error.log

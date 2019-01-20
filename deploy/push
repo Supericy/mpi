@@ -4,5 +4,8 @@ set -xe
 
 CURRENT="$(dirname "$0")"
 ROOT_DIR="$CURRENT/.."
+DIST_DIR="$ROOT_DIR/dist"
+TARGET="root@ckserv.net"
 
-rsync -r -a --progress root@ckserv.net:/usr/lib/mpi "$ROOT_DIR/*"
+# App
+rsync -r -a --progress --exclude mpi/config.py "$ROOT_DIR" "$TARGET:/usr/lib/mpi"

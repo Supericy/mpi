@@ -1,9 +1,10 @@
 [Unit]
-Description=Start MPI Auction Web
+Description=Start MPI action web services
 After=network.target
 
 [Service]
 Type=simple
+WorkingDirectory=/usr/lib/mpi
 ExecStart=/usr/lib/mpi/bin/gunicorn
 
 [Install]

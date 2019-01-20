@@ -1,7 +1,7 @@
-import click
-from prettytable import PrettyTable
 import bootstrap
 import auction
+import click
+from prettytable import PrettyTable
 
 @click.group()
 def main():
