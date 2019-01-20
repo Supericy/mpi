@@ -62,7 +62,7 @@ class Subscription:
         except:
             year = True
         try:
-            model = self.search['model'] in vehicle.model
+            model = self.search['model'].lower() in vehicle.model.lower()
         except:
             model = True
         return year and model
