@@ -62,9 +62,14 @@
                             </v-toolbar>
                             <v-card-text>
                                 <table style="width: 100%">
-                                    <tr v-for="subscription in subscriptions">
+                                    <tr v-for="subscription in subscriptions.subscriptions">
                                         <td>{{subscription.email}}</td>
                                         <td>{{subscription.search}}</td>
+                                        <td style="text-align: right">
+                                            <v-btn color="error" @click="unsubscribe(subscription)">
+                                                DELETE
+                                            </v-btn>
+                                        </td>
                                     </tr>
                                 </table>
                             </v-card-text>
@@ -85,7 +90,10 @@
     new Vue({
         el: '#app',
         data: {
-            subscriptions: [],
+            subscriptions: {
+                subscriptions: [],
+                _links: {}
+            },
             email: '',
             searchMinimumYear: '',
             searchModel: '',
@@ -94,21 +102,46 @@
         created() {
             axios.get('/api/v1/subscriptions')
                 .then((response) => {
-                    this.subscriptions = response.data.subscriptions;
+                    this.subscriptions = response.data;
                 });
         },
         methods: {
             subscribe () {
                 if (this.$refs.form.validate()) {
-                    axios.post('/api/v1/subscriptions', {
+                    axios.post(this.subscriptions._links.self.href, {
                         email: this.email,
                         searchMinimumYear: this.searchMinimumYear,
                         searchModel: this.searchModel
                     })
                         .then((response) => {
-                            this.subscriptions.push(response.data.subscription)
+                            let data = response.data;
+
+                            if (data.subscription) {
+                                this.subscriptions.subscriptions.push(data.subscription)
+                            } else if (data.error) {
+                                alert("Could not add subscription: " + data.error.message);
+                            } else {
+                                alert("An unknown error occurred");
+                            }
                         });
                 }
+            },
+            unsubscribe (subscription) {
+                axios.delete(subscription._links.self.href)
+                    .then((response) => {
+                        let data = response.data;
+
+                        if (data.error) {
+                            alert("Could not delete subscription: " + data.error.message)
+                        } else {
+                            let index = this.subscriptions.subscriptions.findIndex((_s) => {
+                                return _s.subscriptionId === subscription.subscriptionId;
+                            });
+                            if (index > -1) {
+                                this.subscriptions.subscriptions.splice(index, 1);
+                            }
+                        }
+                    })
             }
         }
     })

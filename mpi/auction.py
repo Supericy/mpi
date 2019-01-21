@@ -152,9 +152,16 @@ class SubscriptionRepository:
     def __init__(self, storageDir):
         self.storageDir = storageDir
 
-    def exists(self, email, search):
+    def exists(self, subscriptionId=None, email=None, search=None):
         for subscription in self.all():
-            if subscription.email == email and subscription.search == search:
+            subscriptionIdMatches = not subscriptionId \
+                                    or subscription.subscriptionId == subscriptionId
+            emailMatches = not email \
+                           or subscription.email == email
+            searchMatches = not search \
+                            or yaml.dump(subscription.search).lower() == yaml.dump(search).lower()
+
+            if subscriptionIdMatches and emailMatches and searchMatches:
                 return True
 
         return False
@@ -273,6 +280,10 @@ class SubscriptionExists(Exception):
     pass
 
 
+class SubscriptionNotFound(Exception):
+    pass
+
+
 class AuctionService:
     MAXIMUM_SUBSCRIPTIONS = 50
 
@@ -289,10 +300,18 @@ class AuctionService:
         if self.subscriptionRepository.count() >= self.MAXIMUM_SUBSCRIPTIONS:
             raise SubscriptionMaximumReached(f"Subscription maximum reached ({self.MAXIMUM_SUBSCRIPTIONS})")
 
-        if self.subscriptionRepository.exists(subscription.email, subscription.search):
+        if self.subscriptionRepository.exists(email=subscription.email, search=subscription.search):
             raise SubscriptionExists("Subscription already exists.")
 
         return self.subscriptionRepository.save(subscription)
+
+    def unsubscribe(self, subscriptionId):
+        if not self.subscriptionRepository.exists(subscriptionId=subscriptionId):
+            raise SubscriptionNotFound(f"Subscription does not exist {subscriptionId}")
+
+        self.subscriptionRepository.delete(
+            self.subscriptionRepository.find(subscriptionId)
+        )
 
     def processNew(self):
         subscriptions = self.subscriptionRepository.all()

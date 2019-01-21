@@ -1,15 +1,16 @@
 import bootstrap
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, url_for
+from config import config
 from auction import (
     Filesystem,
     Subscription,
-    SubscriptionNormalizer,
-    SubscriptionExists,
-    SubscriptionMaximumReached
+    SubscriptionNormalizer
 )
 
+
 app = Flask(__name__)
+app.config['SERVER_NAME'] = config['web']['base_uri']
 
 
 def template(template):
@@ -22,47 +23,83 @@ def index():
     return template('index.vue')
 
 
-@app.route('/api/v1/subscriptions', methods=['GET', 'POST'])
-def api_v1_subscriptions():
-    if request.method == 'POST':
-        try:
-            search = {}
+@app.route('/api/v1/subscriptions/<subscriptionId>', methods=['DELETE'])
+def api_v1_subscription_delete(subscriptionId):
+    try:
+        bootstrap.auctions.unsubscribe(subscriptionId)
+        return jsonify({})
+    except Exception as exception:
+        return jsonify_exception(exception)
 
-            if 'searchMinimumYear' in request.json and request.json['searchMinimumYear']:
-                if len(request.json['searchMinimumYear']) > 100:
-                    raise Exception("Search minimum year must be less than 100 characters.")
 
-                search['year'] = {'minimum': request.json['searchMinimumYear']}
+@app.route('/api/v1/subscriptions', methods=['GET'])
+def api_v1_subscriptions_get():
+    normalized = []
 
-            if 'searchModel' in request.json and request.json['searchModel']:
-                if len(request.json['searchModel']) > 100:
-                    raise Exception("Search model must be less than 100 characters.")
+    for subscription in bootstrap.auctions.subscriptions():
+        normalized.append(subscription_normalize_with_links(subscription))
 
-                search['model'] = request.json['searchModel']
+    return jsonify({
+        'subscriptions': normalized,
+        '_links': {
+            "self": {
+                "href": url_for('api_v1_subscriptions_get', _external=True)
+            }
+        }
+    })
 
-            subscription = bootstrap.auctions.subscribe(Subscription(
-                request.json['email'],
-                search
-            ))
-            return jsonify({
-                'subscription': SubscriptionNormalizer.normalize(subscription)
-            })
-        except Exception as exception:
-            return jsonify({
-                'error': {
-                    'type': exception.__class__.__name__,
-                    'message': str(exception)
-                }
-            })
-    else:
-        normalized = []
 
-        for subscription in bootstrap.auctions.subscriptions():
-            normalized.append(SubscriptionNormalizer.normalize(subscription))
+@app.route('/api/v1/subscriptions', methods=['POST'])
+def api_v1_subscriptions_post():
+    try:
+        search = {}
 
+        if 'searchMinimumYear' in request.json and request.json['searchMinimumYear']:
+            if len(request.json['searchMinimumYear']) > 100:
+                raise Exception("Search minimum year must be less than 100 characters.")
+
+            search['year'] = {'minimum': request.json['searchMinimumYear']}
+
+        if 'searchModel' in request.json and request.json['searchModel']:
+            if len(request.json['searchModel']) > 100:
+                raise Exception("Search model must be less than 100 characters.")
+
+            search['model'] = request.json['searchModel'].lower()
+
+        subscription = bootstrap.auctions.subscribe(Subscription(
+            request.json['email'],
+            search
+        ))
+        # TODO: Location header
         return jsonify({
-            'subscriptions': normalized
-        })
+            'subscription': subscription_normalize_with_links(subscription)
+        }), 201
+    except Exception as exception:
+        return jsonify_exception(exception)
+
+
+def subscription_normalize_with_links(subscription):
+    normalized = SubscriptionNormalizer.normalize(subscription)
+    normalized['_links'] = {
+        "self": {
+            "href": url_for(
+                'api_v1_subscription_delete',
+                subscriptionId=subscription.subscriptionId,
+                _external=True
+            )
+        }
+    }
+
+    return normalized
+
+
+def jsonify_exception(exception):
+    return jsonify({
+        'error': {
+            'type': exception.__class__.__name__,
+            'message': str(exception)
+        }
+    })
 
 
 if __name__ == "__main__":
