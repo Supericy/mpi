@@ -4,6 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
+Environment=LC_ALL=C.UTF-8
+Environment=LANG=C.UTF-8
 WorkingDirectory=/usr/lib/mpi
 ExecStart=/usr/lib/mpi/bin/gunicorn
 
