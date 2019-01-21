@@ -10,7 +10,9 @@ from auction import (
 
 
 app = Flask(__name__)
-app.config['SERVER_NAME'] = config['web']['base_uri']
+
+#TODO: make this work behind reverse proxy
+# app.config['SERVER_NAME'] = config['web']['base_uri']
 
 
 def template(template):
@@ -43,7 +45,7 @@ def api_v1_subscriptions_get():
         'subscriptions': normalized,
         '_links': {
             "self": {
-                "href": url_for('api_v1_subscriptions_get', _external=True)
+                "href": url_for('api_v1_subscriptions_get')
             }
         }
     })
@@ -84,8 +86,7 @@ def subscription_normalize_with_links(subscription):
         "self": {
             "href": url_for(
                 'api_v1_subscription_delete',
-                subscriptionId=subscription.subscriptionId,
-                _external=True
+                subscriptionId=subscription.subscriptionId
             )
         }
     }
