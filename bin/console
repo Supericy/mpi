@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 CURRENT="$(dirname "$0")"
-APP_DIR="$CURRENT/../mpi"
+ROOT_DIR="$CURRENT/.."
 
-pipenv run python3 "$APP_DIR/console.py" "$@"
+(cd $ROOT_DIR && pipenv run python3 mpi/console.py "$@")
+
