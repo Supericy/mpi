@@ -19,4 +19,4 @@ ssh root@ckserv.net "true \
     && systemctl enable ckserv-mpi-process.service \
     && systemctl enable ckserv-mpi-process.timer \
     && systemctl start ckserv-mpi-process.timer \
-    && systemctl restart nginx"
+    && systemctl reload nginx"
